@@ -26,7 +26,8 @@ def showData(filename, pos):
 
 
 showData('left-35.txt', '211')
-showData('right-35.txt', '212')
+showData('left-35-schmitt.txt', '212')
+
 
 plt.show()
 

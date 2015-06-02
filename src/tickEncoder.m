@@ -1,31 +1,35 @@
 #
+# Kalman filter for  awheel encoder
+#
+# A Kalman filter against a simulated system.
+#
+
+#
 # System
 #
 
-# time step
-dt = 1;
-A = [1, dt; 0, 0];
 
-#rev per power 
-b = 1;
+#rev per power
+power = 35 
+b = 0.68;
 B = [0; b];
+
 # process noise covarriance
 Q = [1, 0.0; 0.0, 1];
+
 # tick per rev
-N = 25; 
+N = 16; 
 n = N / (2 * pi());
 C = [n, 0; 0, n];
+
 # sensor noise covarriance
 R = [1, 0; 0, 1];
 
 # Initial Conditions
-u = [1];
+u = [power];
 x = [0; b * u(1)];
 t = 0;
 t_end = 50;
-
-# generate process and sensor noise samples
-W = mvnrnd(0, [1, 0; 0, 1], (t_end / dt) + 1)';
 
 #
 # Kalman variables
@@ -36,47 +40,32 @@ P = [2, 2;, 2, 2];
 #
 # plot support, collect as we go
 # 1 - time, 
-# 2,3 - actual position and velocity, 
-# 4,5 - sensor tics and tics velocity,
-# 6,7 - Kalman position and velocity
-State = [t; x(1); x(2); 0; 0; 0; 0];
+# 2,3 - sensor tics and tics velocity,
+# 4,5 - Kalman position and velocity
+State = [t; 0; 0; 0; 0];
 
-do
+fileId = fopen('left-35-tics.txt','r');
+ticsData = fscanf(fileId, '%f');
 
-  #
-  # Update simulated system
-  #
-  state_i = zeros(7, 1);
+t_old = 0;
+tics = 0;
+
+for t_new = ticsData'
 
   # next time step
-  t = t + dt;
+  dt = t_new - t_old;
   state_i(1) = t;
+  disp(dt);
+  A = [1, dt; 0, 0];
 
-  #
-  # Walk system forward and make sensor observation 
-  #
 
-  # grab prior values for approximating sensor
-  x_old = x;
-  z_old = C * x_old;
-
-  # walk
-  x = A * x + B * u + W(t);
-  z = C * x;
-
-  # sensor error is all quantization error - tics are discrete
-  tics_old = floor(z_old(1));
-  tics_new = floor(z(1));
-  v_tics = (tics_new - tics_old) / dt;
-  z = [tics_new; v_tics];
-
-  # record actual system state
-  state_i(2) = x(1);
-  state_i(3) = x(2);
-
-  # record observed systems state
-  state_i(4) = z(1);
-  state_i(5) = z(2);
+  # observed systems state
+  tics = tics + 1;
+  v_tics = 1 / dt;
+  z = [tics; v_tics];
+  
+  state_i(2) = z(1);
+  state_i(3) = z(2);
 
   #
   # Kalman
@@ -94,12 +83,15 @@ do
   P = (eye(2) - K * C) * P;
 
   # record estimated state
-  state_i(6) = x_hat(1);
-  state_i(7) = x_hat(2);
-  State = cat(2, State, state_i);
+  state_i(4) = x_hat(1);
+  state_i(5) = x_hat(2);
+  State = cat(2, State, state_i');
+
+  # updates
+  t_old = t_new;
   
-until (t > t_end)
+endfor
  
 
-plot(State(1, :), State(3, :), "k", State(1, :), State(5, :) , "b", State(1, :), State(7, :), "r");
+#plot(State(1, :), State(3, :), "k", State(1, :), State(5, :) , "b", State(1, :), State(7, :), "r");
 
