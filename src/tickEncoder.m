@@ -10,12 +10,12 @@
 
 
 #rev per power
-power = 35 
-b = 0.68;
+power = 35;
+b = 0.90;
 B = [0; b];
 
 # process noise covarriance
-Q = [1, 0.0; 0.0, 1];
+Q = [100, 0.0; 0.0, 100];
 
 # tick per rev
 N = 16; 
@@ -28,36 +28,36 @@ R = [1, 0; 0, 1];
 # Initial Conditions
 u = [power];
 x = [0; b * u(1)];
-t = 0;
 t_end = 50;
 
 #
 # Kalman variables
 #
 x_hat = x;
-P = [2, 2;, 2, 2];
+P = [2, 2; 2, 2];
 
 #
-# plot support, collect as we go
+# plot support. At each new observation...
 # 1 - time, 
-# 2,3 - sensor tics and tics velocity,
-# 4,5 - Kalman position and velocity
-State = [t; 0; 0; 0; 0];
+# 2,3 - sensor reading - tics and tics velocity
+# 4,5 - model prediction - tics and tics velocity
+# 6,7 - kalman filter - tics and tics velocity
+State = [0; 0; 0; 0; 0; 0; 0];
 
-fileId = fopen('left-35-tics.txt','r');
+fileId = fopen('schmitt-left-actual-tics.txt','r');
 ticsData = fscanf(fileId, '%f');
 
 t_old = 0;
 tics = 0;
 
+# The timestamp of each leading edge detection/event
 for t_new = ticsData'
 
-  # next time step
-  dt = t_new - t_old;
-  state_i(1) = t;
-  disp(dt);
-  A = [1, dt; 0, 0];
+  state_i(1) = t_new;
 
+  # system dynamics for a variable time stamp
+  dt = t_new - t_old;
+  A = [1, dt; 0, 0];
 
   # observed systems state
   tics = tics + 1;
@@ -75,6 +75,9 @@ for t_new = ticsData'
   x_hat = A * x_hat + B * u;
   P = A * P * (A') + Q;
 
+  state_i(4) = x_hat(1);
+  state_i(5) = x_hat(2);
+
   # update
   y_hat = z - C * x_hat;
   S = C * P * (C') + R;
@@ -83,8 +86,8 @@ for t_new = ticsData'
   P = (eye(2) - K * C) * P;
 
   # record estimated state
-  state_i(4) = x_hat(1);
-  state_i(5) = x_hat(2);
+  state_i(6) = x_hat(1);
+  state_i(7) = x_hat(2);
   State = cat(2, State, state_i');
 
   # updates
@@ -95,3 +98,8 @@ endfor
 
 #plot(State(1, :), State(3, :), "k", State(1, :), State(5, :) , "b", State(1, :), State(7, :), "r");
 
+sensor_v_color = "r";
+model_v_color = "b";
+kalman_v_color = 'k';
+plot(State(1, :), State(3, :), sensor_v_color, State(1, :), State(5, :), model_v_color, State(1, :), State(7, :), kalman_v_color);
+axis([0, 20, 0, 60]);

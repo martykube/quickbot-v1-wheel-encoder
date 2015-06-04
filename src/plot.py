@@ -25,8 +25,8 @@ def showData(filename, pos):
 
 
 
-showData('left-35.txt', '211')
-showData('left-35-schmitt.txt', '212')
+showData('schmitt-right-actual.txt', '211')
+showData('schmitt-right-filtered.txt', '212')
 
 
 plt.show()

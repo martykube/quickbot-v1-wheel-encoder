@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
-file = open('left-35.txt')
+file = open('schmitt-left-actual.txt')
 
 # Schmitt filter.  
 # Transitions to high state at v_trasition + v_max
 # Transitions to low state at v_trasition - v_min
-v_transition = 700
+v_transition = 800
 v_max = 300
 v_min = 300
 
