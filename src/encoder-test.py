@@ -33,7 +33,7 @@ GPIO.setup(dir1Pin[LEFT], GPIO.OUT)
 GPIO.setup(dir2Pin[LEFT], GPIO.OUT)
 GPIO.output(dir1Pin[LEFT], GPIO.LOW)
 GPIO.output(dir2Pin[LEFT], GPIO.LOW)
-PWM.start(pwmPin[LEFT], 57)
+PWM.start(pwmPin[LEFT], 58)
 # forward
 GPIO.output(dir2Pin[LEFT], GPIO.HIGH)
 
@@ -41,21 +41,39 @@ GPIO.setup(dir1Pin[RIGHT], GPIO.OUT)
 GPIO.setup(dir2Pin[RIGHT], GPIO.OUT)
 GPIO.output(dir1Pin[RIGHT], GPIO.LOW)
 GPIO.output(dir2Pin[RIGHT], GPIO.LOW)
-PWM.start(pwmPin[RIGHT], 75)
+PWM.start(pwmPin[RIGHT], 79)
 # forward
 GPIO.output(dir2Pin[RIGHT], GPIO.HIGH)
 
+# Schmitt filter.  
+# Transitions from low to high state at v_trasition + v_max
+# Transitions from high to low state at v_trasition - v_min
+v_transition = 800.0
+v_max = 300.0
+v_min = 300.0
+HIGH = 1
+LOW = 0
+state = LOW
+
+run_duration_seconds = 20
 
 t0 = time.time()
-for loop in range(1, 300):
+while (time.time() - t0) < run_duration_seconds:
     for side in [LEFT, RIGHT]:
-        ENC_TIME[side][ENC_IND[side]] = time.time() - t0
+        # acquire encoder reading
         ADC_LOCK.acquire()
-        ENC_VAL[side][ENC_IND[side]] = ADC.read_raw(encPin[side])
-        time.sleep(ADCTIME)
+        elapsed_time = time.time() - t0
+        voltage = ADC.read_raw(encPin[side])
         ADC_LOCK.release()
-        print "{0} {1} {2}".format(side, ENC_TIME[side][ENC_IND[side]], ENC_VAL[side][ENC_IND[side]])
-        ENC_IND[side] = (ENC_IND[side] + 1) % ENC_BUF_SIZE
+        # run through filter
+        voltage = float(voltage)
+        if state == LOW and (voltage > (v_transition + v_max)):
+            state = HIGH
+        elif state == HIGH and (voltage < (v_transition - v_min)):
+            state = LOW
+        print "{0} {1} {2} {3}".format(side, elapsed_time, voltage, state)
+        time.sleep(ADCTIME)
+
 
 GPIO.output(dir1Pin[LEFT], GPIO.LOW)
 GPIO.output(dir2Pin[LEFT], GPIO.LOW)
