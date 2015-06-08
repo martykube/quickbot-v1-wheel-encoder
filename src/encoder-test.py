@@ -74,7 +74,6 @@ while (time.time() - t0) < run_duration_seconds:
         print "{0} {1} {2} {3}".format(side, elapsed_time, voltage, state)
         time.sleep(ADCTIME)
 
-
 GPIO.output(dir1Pin[LEFT], GPIO.LOW)
 GPIO.output(dir2Pin[LEFT], GPIO.LOW)
 GPIO.output(dir1Pin[RIGHT], GPIO.LOW)

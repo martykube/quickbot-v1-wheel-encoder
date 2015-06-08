@@ -17,16 +17,20 @@ def getData(filename):
     return (times, voltages)
 
 
-def showData(filename, pos):
+def showData(filename, pos, xlow, xhigh, ylow, yhigh):
     plt.subplot(pos)
     (times, voltages) = getData(filename)
     plt.plot(times, voltages)
     plt.title(filename)
+    plt.xlim(xlow, xhigh)
+    plt.ylim(ylow, yhigh)
 
 
 
-showData('schmitt-right-actual.txt', '211')
-showData('schmitt-right-filtered.txt', '212')
+showData('10s-left-actual.txt', '221', 3, 5, 0, 1600)
+showData('10s-left-filtered.txt', '223', 3, 5, -0.2, 1.2)
+showData('10s-right-actual.txt', '222', 3, 5, 0, 1600)
+showData('10s-right-filtered.txt', '224', 3, 5, -0.2, 1.2)
 
 
 plt.show()
